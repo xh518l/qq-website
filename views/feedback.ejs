@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - QQ登录网站</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="navbar-brand">
+      <span class="logo">Q</span>
+      <span>QQ登录网站</span>
+    </a>
+    <ul class="navbar-menu">
+      <li><a href="/">首页</a></li>
+      <% sitePages.forEach(function(page) { %>
+        <li><a href="/page/<%= page.page_name %>"><%= page.title %></a></li>
+      <% }); %>
+      <li><a href="/feedback" style="opacity: 1;">意见反馈</a></li>
+      <% if (isLoggedIn) { %>
+        <li><a href="/chat">闲聊室</a></li>
+      <% } %>
+      <% if (isAdmin) { %>
+        <li><a href="/admin/edit">网站编辑</a></li>
+        <li><a href="/admin/users">用户管理</a></li>
+      <% } %>
+    </ul>
+    <div class="navbar-user">
+      <% if (isLoggedIn) { %>
+        <div class="avatar">
+          <% if (currentUser && currentUser.avatar) { %>
+            <img src="<%= currentUser.avatar %>" alt="头像">
+          <% } %>
+        </div>
+        <span><%= currentUser ? currentUser.nickname : '用户' %></span>
+        <% if (isAdmin) { %>
+          <span class="admin-badge">管理员</span>
+        <% } %>
+        <a href="/profile" style="color: white; text-decoration: none; font-size: 14px;">个人中心</a>
+        <a href="/logout" style="color: white; text-decoration: none; font-size: 14px;">退出</a>
+      <% } else { %>
+        <a href="/login" class="btn btn-primary" style="padding: 6px 16px; font-size: 13px;">登录</a>
+      <% } %>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="card">
+      <h2 class="card-title">💡 意见反馈</h2>
+      <p style="color: #666; margin-bottom: 20px;">您的意见对我们非常重要，欢迎提出宝贵建议！</p>
+
+      <% if (success) { %>
+        <div class="alert alert-success" style="margin-bottom: 20px;">
+          ✅ <%= success %>
+        </div>
+      <% } %>
+
+      <% if (error) { %>
+        <div class="alert alert-error" style="margin-bottom: 20px;">
+          ❌ <%= error %>
+        </div>
+      <% } %>
+
+      <form action="/feedback/submit" method="post">
+        <div class="form-group">
+          <label class="form-label">反馈类型</label>
+          <select name="type" class="form-input" style="height: 44px;">
+            <option value="suggestion">💡 功能建议</option>
+            <option value="bug">🐛 问题反馈</option>
+            <option value="question">❓ 使用咨询</option>
+            <option value="other">📝 其他</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">您的称呼 <% if (!isLoggedIn) { %><span style="color: #999; font-weight: normal;">（选填）</span><% } %></label>
+          <input type="text" name="name" class="form-input" 
+                 value="<%= currentUser ? currentUser.nickname : '' %>" 
+                 placeholder="请输入您的称呼">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">联系邮箱 <span style="color: #999; font-weight: normal;">（选填，方便我们回复您）</span></label>
+          <input type="email" name="email" class="form-input" 
+                 value="<%= currentUser && currentUser.email ? currentUser.email : '' %>"
+                 placeholder="example@email.com">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">反馈内容 <span style="color: #f44;">*</span></label>
+          <textarea name="content" class="form-textarea" 
+                    placeholder="请详细描述您的建议或遇到的问题..." 
+                    rows="6" required></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; height: 48px; font-size: 16px;">
+          提交反馈
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>&copy; 2024 QQ登录网站 - 感谢您的反馈</p>
+  </div>
+</body>
+</html>
