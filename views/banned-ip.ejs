@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - QQ登录网站</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      background: #f5f5f5;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .banned-card {
+      background: white;
+      border-radius: 16px;
+      padding: 48px 40px;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+    .banned-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 24px;
+      background: linear-gradient(135deg, #ff4d4f, #cf1322);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .banned-icon svg {
+      width: 40px;
+      height: 40px;
+      fill: white;
+    }
+    h1 {
+      font-size: 24px;
+      color: #cf1322;
+      margin-bottom: 12px;
+    }
+    .ip-display {
+      display: inline-block;
+      background: #fff1f0;
+      color: #cf1322;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    .reason-box {
+      background: #fff7f7;
+      border: 1px solid #ffccc7;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 20px 0;
+      text-align: left;
+    }
+    .reason-label {
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 6px;
+    }
+    .reason-text {
+      color: #333;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .info-text {
+      color: #666;
+      font-size: 14px;
+      line-height: 1.8;
+      margin-top: 16px;
+    }
+    .time-text {
+      color: #999;
+      font-size: 12px;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="banned-card">
+    <div class="banned-icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+      </svg>
+    </div>
+    <h1>访问被禁止</h1>
+    <div class="ip-display">IP: <%= ip %></div>
+    
+    <p class="info-text">
+      您的IP地址已被管理员封禁，无法访问本网站。
+    </p>
+
+    <% if (reason) { %>
+      <div class="reason-box">
+        <div class="reason-label">封禁原因</div>
+        <div class="reason-text"><%= reason %></div>
+      </div>
+    <% } %>
+
+    <% if (banned_at) { %>
+      <p class="time-text">
+        封禁时间：<%= banned_at.slice(0, 10) + ' ' + banned_at.slice(11, 16) %>
+      </p>
+    <% } %>
+
+    <p class="info-text" style="margin-top: 24px; font-size: 13px;">
+      如有疑问，请联系网站管理员。
+    </p>
+  </div>
+</body>
+</html>
