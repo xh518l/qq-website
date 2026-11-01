@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - QQ登录网站</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="navbar-brand">
+      <span class="logo">Q</span>
+      <span>QQ登录网站</span>
+    </a>
+    <ul class="navbar-menu">
+      <li><a href="/">首页</a></li>
+      <% sitePages.forEach(function(page) { %>
+        <li><a href="/page/<%= page.page_name %>"><%= page.title %></a></li>
+      <% }); %>
+      <% if (isLoggedIn) { %>
+        <li><a href="/chat">闲聊室</a></li>
+      <% } %>
+      <% if (isAdmin) { %>
+        <li><a href="/admin/edit">网站编辑</a></li>
+        <li><a href="/admin/users">用户管理</a></li>
+      <% } %>
+    </ul>
+    <div class="navbar-user">
+      <% if (isLoggedIn) { %>
+        <div class="avatar">
+          <% if (currentUser.avatar) { %>
+            <img src="<%= currentUser.avatar %>" alt="头像">
+          <% } %>
+        </div>
+        <span><%= currentUser.nickname || '用户' %></span>
+        <% if (isAdmin) { %>
+          <span class="admin-badge">管理员</span>
+        <% } %>
+        <a href="/profile" style="color: white; text-decoration: none; font-size: 14px;">个人中心</a>
+        <a href="/logout" style="color: white; text-decoration: none; font-size: 14px;">退出</a>
+      <% } else { %>
+        <a href="/login" class="btn btn-primary" style="padding: 6px 16px; font-size: 13px;">登录</a>
+      <% } %>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="card">
+      <div class="page-content">
+        <%- content %>
+      </div>
+    </div>
+
+    <% if (isAdmin) { %>
+      <div style="margin-top: 20px;">
+        <a href="/admin/edit?page=<%= pageName %>" class="btn btn-primary">编辑此页面</a>
+      </div>
+    <% } %>
+  </div>
+
+  <div class="footer">
+    <p>&copy; 2024 QQ登录网站</p>
+  </div>
+</body>
+</html>
