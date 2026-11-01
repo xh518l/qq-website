@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - QQ登录网站</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="navbar-brand">
+      <span class="logo">Q</span>
+      <span>QQ登录网站</span>
+    </a>
+    <ul class="navbar-menu">
+      <li><a href="/">首页</a></li>
+      <% sitePages.forEach(function(page) { %>
+        <li><a href="/page/<%= page.page_name %>"><%= page.title %></a></li>
+      <% }); %>
+      <% if (isLoggedIn) { %>
+        <li><a href="/chat">闲聊室</a></li>
+      <% } %>
+      <% if (isAdmin) { %>
+        <li><a href="/admin/edit">网站编辑</a></li>
+        <li><a href="/admin/users">用户管理</a></li>
+      <% } %>
+    </ul>
+    <div class="navbar-user">
+      <div class="avatar">
+        <% if (user.avatar) { %>
+          <img src="<%= user.avatar %>" alt="头像">
+        <% } %>
+      </div>
+      <span><%= user.nickname %></span>
+      <% if (isAdmin) { %>
+        <span class="admin-badge">管理员</span>
+      <% } %>
+      <a href="/logout" style="color: white; text-decoration: none; font-size: 14px;">退出</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="card">
+      <div class="profile-header">
+        <div class="profile-avatar">
+          <% if (user.avatar) { %>
+            <img src="<%= user.avatar %>" alt="头像">
+          <% } else { %>
+            <img src="https://q1.qlogo.cn/g?b=qq&nk=10000&s=100" alt="默认头像">
+          <% } %>
+        </div>
+        <div class="profile-info">
+          <h2>
+            <%= user.nickname || 'QQ用户' %>
+            <% if (user.is_admin === 1) { %>
+              <span class="admin-badge-lg">管理员</span>
+            <% } %>
+          </h2>
+          <div class="meta">
+            QQ号: <%= user.qq_number || '未绑定' %>
+            &nbsp;|&nbsp;
+            注册时间: <%= user.created_at ? user.created_at.slice(0, 10) : '未知' %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="card-title">账户设置</h3>
+      
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+          <div>
+            <div style="font-weight: 500;">登录密码</div>
+            <div style="color: #999; font-size: 13px; margin-top: 4px;">
+              <%= user.password ? '已设置，可使用QQ号+密码登录' : '未设置，仅能通过QQ登录' %>
+            </div>
+          </div>
+          <a href="/settings/password" class="btn btn-default">
+            <%= user.password ? '修改密码' : '设置密码' %>
+          </a>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+          <div>
+            <div style="font-weight: 500;">绑定QQ号</div>
+            <div style="color: #999; font-size: 13px; margin-top: 4px;" id="qq-number-display">
+              <%= user.qq_number || '未绑定QQ号' %>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="qq-input" class="form-input" style="width: 160px;" placeholder="输入QQ号" value="<%= user.qq_number || '' %>">
+            <button class="btn btn-primary" onclick="bindQQ()">绑定</button>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0;">
+          <div>
+            <div style="font-weight: 500;">退出登录</div>
+            <div style="color: #999; font-size: 13px; margin-top: 4px;">安全退出当前账户</div>
+          </div>
+          <a href="/logout" class="btn btn-danger">退出登录</a>
+        </div>
+      </div>
+    </div>
+
+    <% if (isAdmin) { %>
+      <div class="card">
+        <h3 class="card-title">管理员功能</h3>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <a href="/admin/edit" class="btn btn-primary">编辑网站内容</a>
+          <a href="/admin/users" class="btn btn-default">用户管理</a>
+        </div>
+      </div>
+    <% } %>
+  </div>
+
+  <div class="footer">
+    <p>&copy; 2024 QQ登录网站</p>
+  </div>
+
+  <script>
+    function bindQQ() {
+      const qqNumber = document.getElementById('qq-input').value.trim();
+      
+      if (!qqNumber) {
+        alert('请输入QQ号');
+        return;
+      }
+      
+      if (!/^\d{5,12}$/.test(qqNumber)) {
+        alert('请输入有效的QQ号（5-12位数字）');
+        return;
+      }
+      
+      fetch('/profile/bind-qq', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ qq_number: qqNumber })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert('QQ号绑定成功！');
+          document.getElementById('qq-number-display').textContent = data.user.qq_number;
+          if (data.user.is_admin) {
+            location.reload();
+          }
+        } else {
+          alert(data.error || '绑定失败');
+        }
+      })
+      .catch(err => {
+        alert('绑定失败，请重试');
+      });
+    }
+  </script>
+</body>
+</html>
