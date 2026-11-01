@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - QQ登录网站</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="navbar-brand">
+      <span class="logo">Q</span>
+      <span>QQ登录网站</span>
+    </a>
+    <ul class="navbar-menu">
+      <li><a href="/">首页</a></li>
+      <% sitePages.forEach(function(page) { %>
+        <li><a href="/page/<%= page.page_name %>"><%= page.title %></a></li>
+      <% }); %>
+      <li><a href="/chat">闲聊室</a></li>
+      <li><a href="/admin/edit" style="opacity: 1;">网站编辑</a></li>
+      <li><a href="/admin/users">用户管理</a></li>
+    </ul>
+    <div class="navbar-user">
+      <div class="avatar">
+        <% if (currentUser && currentUser.avatar) { %>
+          <img src="<%= currentUser.avatar %>" alt="头像">
+        <% } %>
+      </div>
+      <span><%= currentUser ? currentUser.nickname : '用户' %></span>
+      <span class="admin-badge">管理员</span>
+      <a href="/logout" style="color: white; text-decoration: none; font-size: 14px;">退出</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="admin-layout">
+      <div class="admin-sidebar">
+        <div class="card" style="padding: 16px;">
+          <h3>页面管理</h3>
+          <ul style="list-style: none; margin-top: 12px;">
+            <% pages.forEach(function(page) { %>
+              <li>
+                <a href="/admin/edit?page=<%= page.page_name %>" 
+                   class="<%= currentPage === page.page_name ? 'active' : '' %>">
+                  <%= page.title %>
+                </a>
+              </li>
+            <% }); %>
+          </ul>
+          
+          <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #eee;">
+            <button class="btn btn-primary" style="width: 100%; font-size: 13px; padding: 8px 12px;" onclick="showNewPageModal()">
+              + 新建页面
+            </button>
+          </div>
+        </div>
+
+        <div class="card" style="padding: 16px;">
+          <h3>快捷操作</h3>
+          <ul style="list-style: none; margin-top: 12px;">
+            <li><a href="/admin/users">用户管理</a></li>
+            <li><a href="/" target="_blank">查看网站</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="admin-main">
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 class="card-title" style="margin-bottom: 0;">编辑: <%= content ? content.title : '新页面' %></h2>
+            <div style="display: flex; gap: 8px;">
+              <% if (content) { %>
+                <a href="/page/<%= currentPage %>" target="_blank" class="btn btn-default">预览</a>
+              <% } %>
+            </div>
+          </div>
+
+          <% if (success) { %>
+            <div class="alert alert-success"><%= success %></div>
+          <% } %>
+
+          <form action="/admin/save" method="post">
+            <input type="hidden" name="page_name" value="<%= currentPage %>">
+            
+            <div class="form-group">
+              <label class="form-label">页面标题</label>
+              <input type="text" name="title" class="form-input" 
+                     value="<%= content ? content.title : '' %>" 
+                     placeholder="请输入页面标题" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">页面内容（支持HTML）</label>
+              
+              <div class="editor-toolbar">
+                <button type="button" onclick="insertTag('<h2>', '</h2>')">H2</button>
+                <button type="button" onclick="insertTag('<h3>', '</h3>')">H3</button>
+                <button type="button" onclick="insertTag('<p>', '</p>')">段落</button>
+                <button type="button" onclick="insertTag('<strong>', '</strong>')">加粗</button>
+                <button type="button" onclick="insertTag('<em>', '</em>')">斜体</button>
+                <button type="button" onclick="insertTag('<ul>\n  <li>', '</li>\n</ul>')">列表</button>
+                <button type="button" onclick="insertLink()">链接</button>
+                <button type="button" onclick="insertImage()">图片</button>
+                <button type="button" onclick="insertTag('<br>', '')">换行</button>
+                <button type="button" onclick="insertTag('<blockquote>', '</blockquote>')">引用</button>
+                <button type="button" onclick="insertTag('<code>', '</code>')">代码</button>
+              </div>
+              
+              <textarea name="content" id="content-editor" class="form-textarea" 
+                        placeholder="请输入页面内容，支持HTML标签..."><%= content ? content.content : '' %></textarea>
+            </div>
+
+            <div style="display: flex; gap: 12px; margin-top: 20px;">
+              <button type="submit" class="btn btn-primary" style="padding: 12px 32px;">保存修改</button>
+              <a href="/admin/edit" class="btn btn-default">取消</a>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title">使用说明</h3>
+          <ul style="margin: 10px 0 0 20px; font-size: 14px; color: #666; line-height: 2;">
+            <li>页面内容支持HTML标签，可直接编写HTML代码</li>
+            <li>使用工具栏按钮可以快速插入常用HTML标签</li>
+            <li>新建页面后，可以通过 <code>/page/页面名称</code> 访问</li>
+            <li>首页（home）是网站默认首页</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 新建页面弹窗 -->
+  <div id="newPageModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 12px; padding: 30px; width: 400px; max-width: 90%;">
+      <h3 style="margin-bottom: 20px;">新建页面</h3>
+      <form action="/admin/new-page" method="post">
+        <div class="form-group">
+          <label class="form-label">页面标识（英文，如 about）</label>
+          <input type="text" name="page_name" class="form-input" placeholder="例如: about, contact" required pattern="[a-zA-Z0-9_-]+">
+        </div>
+        <div class="form-group">
+          <label class="form-label">页面标题</label>
+          <input type="text" name="title" class="form-input" placeholder="例如: 关于我们" required>
+        </div>
+        <div style="display: flex; gap: 12px; margin-top: 20px;">
+          <button type="submit" class="btn btn-primary" style="flex: 1;">创建</button>
+          <button type="button" class="btn btn-default" onclick="hideNewPageModal()">取消</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 图片选择弹窗 -->
+  <div id="imageModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: white; border-radius: 12px; width: 560px; max-width: 100%; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden;">
+      <div style="padding: 20px 24px; border-bottom: 1px solid #f0f0f0;">
+        <h3 style="margin: 0; color: #333;">插入图片</h3>
+      </div>
+
+      <!-- 标签栏 -->
+      <div style="display: flex; border-bottom: 1px solid #f0f0f0;">
+        <button class="img-tab active" id="uploadTab" onclick="switchImageTab('upload')" style="flex: 1; padding: 12px; border: none; background: none; cursor: pointer; font-size: 14px; color: #666; border-bottom: 2px solid transparent;">
+          📤 上传图片
+        </button>
+        <button class="img-tab" id="libraryTab" onclick="switchImageTab('library')" style="flex: 1; padding: 12px; border: none; background: none; cursor: pointer; font-size: 14px; color: #666; border-bottom: 2px solid transparent;">
+          📚 图片库
+        </button>
+        <button class="img-tab" id="urlTab" onclick="switchImageTab('url')" style="flex: 1; padding: 12px; border: none; background: none; cursor: pointer; font-size: 14px; color: #666; border-bottom: 2px solid transparent;">
+          🔗 图片链接
+        </button>
+      </div>
+
+      <div style="flex: 1; overflow-y: auto; padding: 24px;">
+        <!-- 上传图片面板 -->
+        <div id="uploadPanel" class="img-tab-panel">
+          <div style="border: 2px dashed #ddd; border-radius: 10px; padding: 40px 20px; text-align: center; background: #fafafa; margin-bottom: 20px; cursor: pointer;" onclick="document.getElementById('imageFileInput').click()" ondragover="event.preventDefault(); this.style.borderColor='#12b7f5'; this.style.background='#f0f8ff';" ondragleave="this.style.borderColor='#ddd'; this.style.background='#fafafa';" ondrop="event.preventDefault(); this.style.borderColor='#ddd'; this.style.background='#fafafa'; document.getElementById('imageFileInput').files = event.dataTransfer.files;">
+            <div style="font-size: 48px; margin-bottom: 12px;">📷</div>
+            <div style="font-size: 16px; color: #333; margin-bottom: 6px;">点击选择图片 或 拖拽到这里</div>
+            <div style="font-size: 12px; color: #999;">支持 JPG、PNG、GIF、WEBP，最大 5MB</div>
+            <input type="file" id="imageFileInput" accept="image/*" style="display: none;" onchange="previewImage(this)">
+          </div>
+          
+          <div id="uploadPreview" style="display: none; text-align: center; margin-bottom: 20px;">
+            <img id="previewImg" style="max-height: 150px; max-width: 100%; border-radius: 8px; border: 1px solid #eee;">
+            <div id="previewName" style="font-size: 13px; color: #666; margin-top: 8px;"></div>
+          </div>
+
+          <button id="uploadBtn" class="btn btn-primary" style="width: 100%; height: 44px;" onclick="uploadImage()">
+            上传并插入
+          </button>
+        </div>
+
+        <!-- 图片库面板 -->
+        <div id="libraryPanel" class="img-tab-panel" style="display: none;">
+          <div id="imageGallery" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+            <div style="text-align:center;color:#999;padding:40px;grid-column:1/-1;">加载中...</div>
+          </div>
+        </div>
+
+        <!-- 图片链接面板 -->
+        <div id="urlPanel" class="img-tab-panel" style="display: none;">
+          <div class="form-group">
+            <label class="form-label">图片地址</label>
+            <input type="text" id="imageUrlInput" class="form-input" placeholder="https://example.com/image.jpg">
+          </div>
+          <button class="btn btn-primary" style="width: 100%; height: 44px;" onclick="insertImageByUrl()">
+            插入图片
+          </button>
+        </div>
+      </div>
+
+      <div style="padding: 16px 24px; border-top: 1px solid #f0f0f0; text-align: right;">
+        <button class="btn btn-default" onclick="hideImageModal()">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .img-tab.active {
+      color: #12b7f5 !important;
+      border-bottom-color: #12b7f5 !important;
+      font-weight: 500;
+    }
+
+    .gallery-item {
+      border: 1px solid #eee;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: white;
+    }
+
+    .gallery-item:hover {
+      border-color: #12b7f5;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(18, 183, 245, 0.15);
+    }
+
+    .gallery-item img {
+      width: 100%;
+      height: 100px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .gallery-info {
+      padding: 6px 8px;
+      font-size: 11px;
+      color: #999;
+      background: #fafafa;
+      text-align: center;
+    }
+  </style>
+
+  <script>
+    function previewImage(input) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('previewImg').src = e.target.result;
+          document.getElementById('previewName').textContent = input.files[0].name + ' (' + (input.files[0].size / 1024).toFixed(1) + ' KB)';
+          document.getElementById('uploadPreview').style.display = 'block';
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    // 点击弹窗外部关闭
+    document.getElementById('imageModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        hideImageModal();
+      }
+    });
+  </script>
+
+  <div class="footer">
+    <p>&copy; 2024 QQ登录网站 - 管理后台</p>
+  </div>
+
+  <script>
+    function insertTag(startTag, endTag) {
+      const textarea = document.getElementById('content-editor');
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selectedText = textarea.value.substring(start, end);
+      
+      const newText = textarea.value.substring(0, start) + startTag + selectedText + endTag + textarea.value.substring(end);
+      textarea.value = newText;
+      
+      const cursorPos = start + startTag.length + selectedText.length;
+      textarea.focus();
+      textarea.setSelectionRange(cursorPos, cursorPos);
+    }
+
+    function insertLink() {
+      const url = prompt('请输入链接地址:', 'https://');
+      const text = prompt('请输入链接文字:', '链接文字');
+      if (url && text) {
+        insertTag(`<a href="${url}" target="_blank">`, '</a>');
+        const textarea = document.getElementById('content-editor');
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const linkHtml = `<a href="${url}" target="_blank">${text}</a>`;
+        textarea.value = textarea.value.substring(0, start - 23) + linkHtml + textarea.value.substring(end + 4);
+      }
+    }
+
+    function insertImage() {
+      document.getElementById('imageModal').style.display = 'flex';
+      loadImageLibrary();
+    }
+
+    // 隐藏图片弹窗
+    function hideImageModal() {
+      document.getElementById('imageModal').style.display = 'none';
+      document.getElementById('uploadTab').click();
+    }
+
+    // 上传图片
+    function uploadImage() {
+      const fileInput = document.getElementById('imageFileInput');
+      const file = fileInput.files[0];
+      
+      if (!file) {
+        alert('请选择一张图片');
+        return;
+      }
+      
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      const uploadBtn = document.getElementById('uploadBtn');
+      uploadBtn.disabled = true;
+      uploadBtn.textContent = '上传中...';
+      
+      fetch('/admin/upload-image', {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          // 上传成功，直接插入到编辑器
+          insertTag(`<img src="${data.url}" alt="图片" style="max-width: 100%;">`, '');
+          hideImageModal();
+          fileInput.value = '';
+          alert('图片已插入');
+        } else {
+          alert(data.error || '上传失败');
+        }
+      })
+      .catch(err => {
+        alert('上传失败，请重试');
+      })
+      .finally(() => {
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = '上传并插入';
+      });
+    }
+
+    // 加载图片库
+    function loadImageLibrary() {
+      fetch('/admin/images')
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            const gallery = document.getElementById('imageGallery');
+            if (data.images.length === 0) {
+              gallery.innerHTML = '<div style="text-align:center;color:#999;padding:40px;">暂无图片，先上传几张吧~</div>';
+              return;
+            }
+            gallery.innerHTML = data.images.map(img => `
+              <div class="gallery-item" onclick="insertLibraryImage('${img.url}')">
+                <img src="${img.url}" alt="${img.name}">
+                <div class="gallery-info">
+                  <span>${img.size}</span>
+                </div>
+              </div>
+            `).join('');
+          }
+        })
+        .catch(err => {
+          console.error('加载图片库失败', err);
+        });
+    }
+
+    // 插入图库中的图片
+    function insertLibraryImage(url) {
+      insertTag(`<img src="${url}" alt="图片" style="max-width: 100%;">`, '');
+      hideImageModal();
+    }
+
+    // 用URL插入图片
+    function insertImageByUrl() {
+      const url = document.getElementById('imageUrlInput').value.trim();
+      if (!url) {
+        alert('请输入图片地址');
+        return;
+      }
+      insertTag(`<img src="${url}" alt="图片" style="max-width: 100%;">`, '');
+      hideImageModal();
+      document.getElementById('imageUrlInput').value = '';
+    }
+
+    // 切换标签
+    function switchImageTab(tab) {
+      document.querySelectorAll('.img-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.img-tab-panel').forEach(p => p.style.display = 'none');
+      
+      if (tab === 'upload') {
+        document.getElementById('uploadTab').classList.add('active');
+        document.getElementById('uploadPanel').style.display = 'block';
+      } else if (tab === 'library') {
+        document.getElementById('libraryTab').classList.add('active');
+        document.getElementById('libraryPanel').style.display = 'block';
+        loadImageLibrary();
+      } else if (tab === 'url') {
+        document.getElementById('urlTab').classList.add('active');
+        document.getElementById('urlPanel').style.display = 'block';
+      }
+    }
+
+    function showNewPageModal() {
+      document.getElementById('newPageModal').style.display = 'flex';
+    }
+
+    function hideNewPageModal() {
+      document.getElementById('newPageModal').style.display = 'none';
+    }
+
+    // 点击弹窗外部关闭
+    document.getElementById('newPageModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        hideNewPageModal();
+      }
+    });
+  </script>
+</body>
+</html>
