@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - QQ登录网站</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="navbar-brand">
+      <span class="logo">Q</span>
+      <span>QQ登录网站</span>
+    </a>
+    <ul class="navbar-menu">
+      <li><a href="/">首页</a></li>
+      <% sitePages.forEach(function(page) { %>
+        <li><a href="/page/<%= page.page_name %>"><%= page.title %></a></li>
+      <% }); %>
+      <% if (isLoggedIn) { %>
+        <li><a href="/chat">闲聊室</a></li>
+      <% } %>
+      <% if (isAdmin) { %>
+        <li><a href="/admin/edit">网站编辑</a></li>
+        <li><a href="/admin/users">用户管理</a></li>
+      <% } %>
+    </ul>
+    <div class="navbar-user">
+      <% if (isLoggedIn) { %>
+        <div class="avatar">
+          <% if (currentUser.avatar) { %>
+            <img src="<%= currentUser.avatar %>" alt="头像">
+          <% } %>
+        </div>
+        <span><%= currentUser.nickname || '用户' %></span>
+        <% if (isAdmin) { %>
+          <span class="admin-badge">管理员</span>
+        <% } %>
+        <a href="/profile" style="color: white; text-decoration: none; font-size: 14px;">个人中心</a>
+        <a href="/logout" style="color: white; text-decoration: none; font-size: 14px;">退出</a>
+      <% } else { %>
+        <a href="/login" class="btn btn-primary" style="padding: 6px 16px; font-size: 13px;">登录</a>
+      <% } %>
+    </div>
+  </nav>
+
+  <div class="container">
+    <% if (isLoggedIn && typeof justRegistered !== 'undefined' && justRegistered) { %>
+      <div class="alert alert-success" style="margin-bottom: 20px;">
+        🎉 注册成功！欢迎加入，<%= currentUser.nickname %>！
+      </div>
+    <% } %>
+
+    <div class="card">
+      <div class="page-content">
+        <%- content %>
+      </div>
+    </div>
+
+    <% if (isLoggedIn && !isAdmin) { %>
+      <div class="card">
+        <h3 class="card-title">温馨提示</h3>
+        <p>您已成功登录！您可以：</p>
+        <ul style="margin: 10px 0 10px 20px;">
+          <li>前往 <a href="/settings/password">设置密码</a>，使用QQ号+密码登录</li>
+          <li>前往 <a href="/profile">个人中心</a> 管理您的账户</li>
+        </ul>
+      </div>
+    <% } %>
+
+    <% if (isAdmin) { %>
+      <div class="card">
+        <h3 class="card-title">管理员功能</h3>
+        <p>作为管理员，您可以：</p>
+        <div style="display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap;">
+          <a href="/admin/edit" class="btn btn-primary">编辑网站内容</a>
+          <a href="/admin/users" class="btn btn-default">管理用户</a>
+        </div>
+      </div>
+    <% } %>
+
+    <% if (!isLoggedIn) { %>
+      <div class="card" style="text-align: center;">
+        <h3 class="card-title">立即体验</h3>
+        <p style="margin-bottom: 20px;">使用QQ账号快速登录，体验更多功能</p>
+        <a href="/login" class="btn btn-primary">
+          <svg class="qq-icon" viewBox="0 0 1024 1024" fill="currentColor">
+            <path d="M848.3 638.2c-2.8-15-5.6-26.3-5.6-26.3 0 0 4.2-42.2-14.6-102.8 0 0-20.5-94.3-85.7-142.1 0 0 20.8-92.2-24.6-148.5 0 0-2.2-2.2-3.3-3.3C662.6 130.4 575.7 64 512 64c-65 0-153.9 68.5-204 152.3-1.1 1.1-3.3 3.3-3.3 3.3-45.4 56.3-24.6 148.5-24.6 148.5-65.2 47.8-85.7 142.1-85.7 142.1-18.8 60.6-14.6 102.8-14.6 102.8 0 0-2.8 11.3-5.6 26.3-7.7 40.9-12.7 69.7-9 78.9 5.6 14 28.6 18.1 57.4 11.8 34.6-7.5 84.6-29.3 106-50.9 0 0 10.2 32.2 52.4 58.9 0 0-29.1 8.5-34.8 26.8-5.6 18.1 18.1 33.1 52.4 33.1 4.2 0 8.4-.4 12.6-1.1-1 4.5-1.5 9.1-1.5 13.8 0 46.9 32.9 77.3 100.5 77.3 67.6 0 100.5-30.3 100.5-77.3 0-4.7-.6-9.3-1.6-13.8 4.2.7 8.4 1.1 12.6 1.1 34.3 0 58.1-14.9 52.4-33.1-5.8-18.3-34.8-26.8-34.8-26.8 42.2-26.7 52.4-58.9 52.4-58.9 21.4 21.6 71.4 43.4 106 50.9 28.9 6.3 51.9 2.2 57.4-11.8 3.7-9.2-1.3-38-9-78.9z"/>
+          </svg>
+          QQ登录
+        </a>
+      </div>
+    <% } %>
+  </div>
+
+  <div class="footer">
+    <p>&copy; 2024 QQ登录网站 - 基于QQ OAuth2.0</p>
+  </div>
+</body>
+</html>
