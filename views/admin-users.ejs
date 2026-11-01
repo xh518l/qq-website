@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - QQ登录网站</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="navbar-brand">
+      <span class="logo">Q</span>
+      <span>QQ登录网站</span>
+    </a>
+    <ul class="navbar-menu">
+      <li><a href="/">首页</a></li>
+      <% sitePages.forEach(function(page) { %>
+        <li><a href="/page/<%= page.page_name %>"><%= page.title %></a></li>
+      <% }); %>
+      <li><a href="/chat">闲聊室</a></li>
+      <li><a href="/admin/edit">网站编辑</a></li>
+      <li><a href="/admin/users" style="opacity: 1;">用户管理</a></li>
+    </ul>
+    <div class="navbar-user">
+      <div class="avatar">
+        <% if (currentUser && currentUser.avatar) { %>
+          <img src="<%= currentUser.avatar %>" alt="头像">
+        <% } %>
+      </div>
+      <span><%= currentUser ? currentUser.nickname : '用户' %></span>
+      <span class="admin-badge">管理员</span>
+      <a href="/logout" style="color: white; text-decoration: none; font-size: 14px;">退出</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 class="card-title" style="margin-bottom: 0;">用户管理</h2>
+        <div style="color: #666; font-size: 14px;">
+          共 <%= users.length %> 位用户
+        </div>
+      </div>
+
+      <% if (success) { %>
+        <div class="alert alert-success"><%= success %></div>
+      <% } %>
+
+      <% if (error) { %>
+        <div class="alert alert-error"><%= error %></div>
+      <% } %>
+
+      <% if (users.length === 0) { %>
+        <div style="text-align: center; padding: 40px; color: #999;">
+          暂无用户
+        </div>
+      <% } else { %>
+        <div style="overflow-x: auto;">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>昵称</th>
+                <th>QQ号</th>
+                <th>角色</th>
+                <th>状态</th>
+                <th>最后登录IP</th>
+                <th>注册时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% users.forEach(function(user) { %>
+                <tr style="<%= user.is_banned === 1 ? 'opacity: 0.6; background: #fef0f0;' : '' %>">
+                  <td><%= user.id %></td>
+                  <td>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                      <span><%= user.nickname || '未设置' %></span>
+                    </div>
+                  </td>
+                  <td><%= user.qq_number || '-' %></td>
+                  <td>
+                    <% if (user.is_admin === 1) { %>
+                      <span style="background: #fff7e6; color: #fa8c16; padding: 2px 8px; border-radius: 4px; font-size: 12px;">管理员</span>
+                    <% } else { %>
+                      <span style="background: #f0f0f0; color: #666; padding: 2px 8px; border-radius: 4px; font-size: 12px;">普通用户</span>
+                    <% } %>
+                  </td>
+                  <td>
+                    <% if (user.is_banned === 1) { %>
+                      <span style="background: #fff1f0; color: #cf1322; padding: 2px 8px; border-radius: 4px; font-size: 12px;">已注销</span>
+                    <% } else { %>
+                      <span style="background: #f6ffed; color: #389e0d; padding: 2px 8px; border-radius: 4px; font-size: 12px;">正常</span>
+                    <% } %>
+                  </td>
+                  <td>
+                    <% if (user.last_ip) { %>
+                      <code style="font-size: 12px; color: #666; font-family: 'Courier New', monospace;"><%= user.last_ip %></code>
+                    <% } else { %>
+                      <span style="color: #ccc; font-size: 12px;">未登录</span>
+                    <% } %>
+                  </td>
+                  <td><%= user.created_at ? user.created_at.slice(0, 10) : '-' %></td>
+                  <td>
+                    <% if (user.is_admin !== 1) { %>
+                      <% if (user.is_banned === 1) { %>
+                        <button class="btn btn-success" style="padding: 4px 12px; font-size: 12px;" onclick="unbanUser(<%= user.id %>, '<%= user.nickname %>', '<%= user.last_ip %>')">
+                          解除注销
+                        </button>
+                      <% } else { %>
+                        <button class="btn btn-danger" style="padding: 4px 12px; font-size: 12px;" onclick="showBanModal(<%= user.id %>, '<%= user.nickname %>', '<%= user.qq_number %>', '<%= user.last_ip %>')">
+                          强制注销
+                        </button>
+                      <% } %>
+                    <% } else { %>
+                      <span style="color: #ccc; font-size: 12px;">-</span>
+                    <% } %>
+                  </td>
+                </tr>
+                <% if (user.is_banned === 1 && user.ban_reason) { %>
+                  <tr style="background: #fff7f7;">
+                    <td colspan="7" style="padding: 8px 16px; font-size: 13px; color: #999;">
+                      📌 注销原因：<%= user.ban_reason %>
+                      <% if (user.banned_at) { %>
+                        &nbsp;·&nbsp; 注销时间：<%= user.banned_at.slice(0, 10) %>
+                      <% } %>
+                    </td>
+                  </tr>
+                <% } %>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+
+    <div class="card">
+      <h3 class="card-title">管理员说明</h3>
+      <ul style="margin: 10px 0 0 20px; font-size: 14px; color: #666; line-height: 2;">
+        <li>QQ号为 <strong>18689326</strong> 的用户自动成为管理员</li>
+        <li>管理员可以编辑网站所有页面内容</li>
+        <li>管理员可以强制注销违规用户，需填写注销理由</li>
+        <li>被注销的用户无法登录，且会被强制下线</li>
+        <li>管理员账号不能被注销</li>
+        <li>可以随时解除用户的注销状态</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 注销用户弹窗 -->
+  <div id="banModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 12px; padding: 30px; width: 440px; max-width: 90%;">
+      <h3 style="margin-bottom: 8px; color: #cf1322;">⚠️ 强制注销用户</h3>
+      <p style="color: #666; font-size: 14px; margin-bottom: 20px;">
+        确定要注销用户 <strong id="banUserName" style="color: #333;"></strong>（QQ: <span id="banUserQQ"></span>）吗？
+        <br>注销后该用户将无法登录，且会被强制下线。
+      </p>
+      
+      <div class="form-group">
+        <label class="form-label">注销理由 <span style="color: #ff4d4f;">*</span></label>
+        <textarea id="banReason" class="form-textarea" style="min-height: 80px; resize: vertical;" placeholder="请输入注销理由，用户登录时会看到此原因"></textarea>
+      </div>
+
+      <div id="banIpOption" style="display: none; background: #fff7f7; border: 1px solid #ffccc7; border-radius: 8px; padding: 12px; margin-bottom: 8px;">
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+          <input type="checkbox" id="banIpCheckbox" style="width: 16px; height: 16px;">
+          <div>
+            <div style="font-size: 14px; color: #333; font-weight: 500;">同时封禁IP</div>
+            <div style="font-size: 12px; color: #999; margin-top: 2px;">
+              封禁该用户最后登录的IP：<code id="banUserIp" style="font-family: 'Courier New', monospace; color: #cf1322; background: #fff1f0; padding: 1px 6px; border-radius: 3px;"></code>
+            </div>
+          </div>
+        </label>
+      </div>
+
+      <div style="display: flex; gap: 12px; margin-top: 20px;">
+        <button class="btn btn-danger" style="flex: 1;" onclick="confirmBan()">确认注销</button>
+        <button class="btn btn-default" onclick="hideBanModal()">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>&copy; 2024 QQ登录网站 - 管理后台</p>
+  </div>
+
+  <script>
+    let currentBanUserId = null;
+    let currentBanUserIp = '';
+
+    function showBanModal(userId, nickname, qqNumber, lastIp) {
+      currentBanUserId = userId;
+      currentBanUserIp = lastIp || '';
+      document.getElementById('banUserName').textContent = nickname || '用户';
+      document.getElementById('banUserQQ').textContent = qqNumber || '-';
+      document.getElementById('banReason').value = '';
+      document.getElementById('banIpCheckbox').checked = false;
+      
+      // 如果用户有最后登录IP，显示同时封禁IP选项
+      const banIpOption = document.getElementById('banIpOption');
+      if (lastIp) {
+        document.getElementById('banUserIp').textContent = lastIp;
+        banIpOption.style.display = 'block';
+      } else {
+        banIpOption.style.display = 'none';
+      }
+      
+      document.getElementById('banModal').style.display = 'flex';
+    }
+
+    function hideBanModal() {
+      document.getElementById('banModal').style.display = 'none';
+      currentBanUserId = null;
+      currentBanUserIp = '';
+    }
+
+    function confirmBan() {
+      const reason = document.getElementById('banReason').value.trim();
+      const banIp = document.getElementById('banIpCheckbox').checked;
+      
+      if (!reason) {
+        alert('请填写注销理由');
+        return;
+      }
+      
+      fetch('/admin/users/ban', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          user_id: currentBanUserId,
+          reason: reason,
+          ban_ip: banIp
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert('用户已注销' + (banIp ? '，IP已封禁' : ''));
+          location.reload();
+        } else {
+          alert(data.error || '注销失败');
+        }
+      })
+      .catch(err => {
+        alert('操作失败，请重试');
+      });
+    }
+
+    function unbanUser(userId, nickname, lastIp) {
+      const msg = lastIp 
+        ? `确定要解除用户 "${nickname || '用户'}" 的注销状态吗？\n\n同时解除IP "${lastIp}" 的封禁？`
+        : `确定要解除用户 "${nickname || '用户'}" 的注销状态吗？`;
+      
+      const unbanIp = lastIp ? confirm(msg) : confirm(msg);
+      
+      fetch('/admin/users/unban', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          unban_ip: unbanIp && lastIp ? true : false
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert('已解除注销');
+          location.reload();
+        } else {
+          alert(data.error || '操作失败');
+        }
+      })
+      .catch(err => {
+        alert('操作失败，请重试');
+      });
+    }
+
+    // 点击弹窗外部关闭
+    document.getElementById('banModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        hideBanModal();
+      }
+    });
+  </script>
+</body>
+</html>
