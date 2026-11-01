@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - QQ登录网站</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="login-wrapper">
+    <div class="login-card">
+      <div class="login-header">
+        <div style="width: 64px; height: 64px; margin: 0 auto 16px; background: linear-gradient(135deg, #07c160, #06ad56); border-radius: 16px; display: flex; align-items: center; justify-content: center;">
+          <% if (step === 1) { %>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
+              <path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </svg>
+          <% } else { %>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
+              <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+            </svg>
+          <% } %>
+        </div>
+        <h1><%= step === 1 ? '注册账号' : '设置密码' %></h1>
+        <p>
+          <% if (step === 1) { %>
+            使用QQ号快速注册
+          <% } else { %>
+            为 <strong><%= qq_number %></strong> 设置密码
+          <% } %>
+        </p>
+      </div>
+
+      <!-- 步骤指示器 -->
+      <div class="step-indicator">
+        <div class="step <%= step >= 1 ? 'active' : '' %>">
+          <div class="step-circle">1</div>
+          <span>输入QQ号</span>
+        </div>
+        <div class="step-line <%= step >= 2 ? 'active' : '' %>"></div>
+        <div class="step <%= step >= 2 ? 'active' : '' %>">
+          <div class="step-circle">2</div>
+          <span>设置密码</span>
+        </div>
+      </div>
+
+      <% if (error) { %>
+        <div class="alert alert-error"><%= error %></div>
+      <% } %>
+
+      <% if (step === 1) { %>
+        <!-- 第一步：输入QQ号 -->
+        <form action="/register" method="post">
+          <div class="form-group">
+            <label class="form-label">QQ号</label>
+            <div class="input-with-avatar">
+              <div class="input-avatar" id="avatarPreview">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="#ccc">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+              </div>
+              <input type="text" name="qq_number" id="qqInput" class="form-input input-qq" placeholder="请输入QQ号" required pattern="[0-9]{5,12}" maxlength="12" autofocus>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-success" style="width: 100%; height: 46px; font-size: 16px; border-radius: 10px;">
+            下一步
+          </button>
+        </form>
+      <% } else { %>
+        <!-- 第二步：设置密码 -->
+        <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #f6ffed; border: 1px solid #b7eb8f; border-radius: 8px; margin-bottom: 20px;">
+          <div style="width: 40px; height: 40px; border-radius: 50%; overflow: hidden; background: #f0f0f0; flex-shrink: 0;">
+            <img src="https://q1.qlogo.cn/g?b=qq&nk=<%= qq_number %>&s=100" alt="QQ头像" style="width: 100%; height: 100%; object-fit: cover;">
+          </div>
+          <div>
+            <div style="font-weight: 500;">QQ用户<%= qq_number.slice(-4) %></div>
+            <div style="font-size: 12px; color: #666;">QQ: <%= qq_number %></div>
+          </div>
+        </div>
+
+        <form action="/register/password" method="post">
+          <div class="form-group">
+            <label class="form-label">设置密码</label>
+            <input type="password" name="password" class="form-input" placeholder="请输入密码（至少6位）" required minlength="6" autofocus>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">确认密码</label>
+            <input type="password" name="confirm_password" class="form-input" placeholder="请再次输入密码" required minlength="6">
+          </div>
+
+          <button type="submit" class="btn btn-success" style="width: 100%; height: 46px; font-size: 16px; border-radius: 10px;">
+            完成注册
+          </button>
+        </form>
+      <% } %>
+
+      <div style="text-align: center; margin-top: 20px; font-size: 14px; color: #666;">
+        已有账号？<a href="/login" style="color: #12b7f5; text-decoration: none;">立即登录</a>
+      </div>
+
+      <div style="text-align: center; margin-top: 16px; font-size: 12px; color: #bbb;">
+        <a href="/" style="color: #bbb; text-decoration: none;">返回首页</a>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .input-with-avatar {
+      position: relative;
+    }
+
+    .input-avatar {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      overflow: hidden;
+      background: #f0f0f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+    }
+
+    .input-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .input-qq {
+      padding-left: 52px !important;
+    }
+
+    .step-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+      gap: 8px;
+    }
+
+    .step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .step-circle {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #f0f0f0;
+      color: #999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .step.active .step-circle {
+      background: linear-gradient(135deg, #07c160, #06ad56);
+      color: white;
+    }
+
+    .step span {
+      font-size: 12px;
+      color: #999;
+    }
+
+    .step.active span {
+      color: #07c160;
+      font-weight: 500;
+    }
+
+    .step-line {
+      width: 40px;
+      height: 2px;
+      background: #f0f0f0;
+      margin-bottom: 18px;
+      transition: all 0.3s;
+    }
+
+    .step-line.active {
+      background: #07c160;
+    }
+  </style>
+
+  <% if (step === 1) { %>
+  <script>
+    const qqInput = document.getElementById('qqInput');
+    const avatarPreview = document.getElementById('avatarPreview');
+
+    // 输入QQ号时实时显示头像
+    let debounceTimer;
+    qqInput.addEventListener('input', function() {
+      const qq = this.value.trim();
+      
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        if (/^\d{5,12}$/.test(qq)) {
+          avatarPreview.innerHTML = `<img src="https://q1.qlogo.cn/g?b=qq&nk=${qq}&s=100" alt="QQ头像" onerror="this.parentElement.innerHTML='<svg width=\\'24\\' height=\\'24\\' viewBox=\\'0 0 24 24\\' fill=#ccc><path d=\\'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\\'/></svg>'">`;
+        } else {
+          avatarPreview.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="#ccc"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`;
+        }
+      }, 200);
+    });
+  </script>
+  <% } %>
+</body>
+</html>
