@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - QQ登录网站</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="navbar-brand">
+      <span class="logo">Q</span>
+      <span>QQ登录网站</span>
+    </a>
+    <ul class="navbar-menu">
+      <li><a href="/">首页</a></li>
+      <% sitePages.forEach(function(page) { %>
+        <li><a href="/page/<%= page.page_name %>"><%= page.title %></a></li>
+      <% }); %>
+      <li><a href="/feedback">意见反馈</a></li>
+      <li><a href="/chat">闲聊室</a></li>
+      <li><a href="/admin/edit">网站编辑</a></li>
+      <li><a href="/admin/users">用户管理</a></li>
+      <li><a href="/admin/feedback" style="opacity: 1;">反馈管理</a></li>
+    </ul>
+    <div class="navbar-user">
+      <div class="avatar">
+        <% if (currentUser && currentUser.avatar) { %>
+          <img src="<%= currentUser.avatar %>" alt="头像">
+        <% } %>
+      </div>
+      <span><%= currentUser ? currentUser.nickname : '用户' %></span>
+      <span class="admin-badge">管理员</span>
+      <a href="/logout" style="color: white; text-decoration: none; font-size: 14px;">退出</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="admin-layout">
+      <div class="admin-sidebar">
+        <div class="card" style="padding: 16px;">
+          <h3>管理菜单</h3>
+          <ul style="list-style: none; margin-top: 12px;">
+            <li><a href="/admin/edit">网站编辑</a></li>
+            <li><a href="/admin/users">用户管理</a></li>
+            <li><a href="/admin/banned-ips">IP封禁管理</a></li>
+            <li><a href="/admin/feedback" class="active">反馈管理</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="admin-main">
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 class="card-title" style="margin-bottom: 0;">📬 反馈管理</h2>
+            <div style="display: flex; gap: 10px; font-size: 13px;">
+              <span style="color: #999;">总计: <strong style="color: #333;"><%= stats.total %></strong></span>
+              <span style="color: #f39c12;">待处理: <strong><%= stats.pending %></strong></span>
+              <span style="color: #3498db;">处理中: <strong><%= stats.processing %></strong></span>
+              <span style="color: #27ae60;">已解决: <strong><%= stats.resolved %></strong></span>
+            </div>
+          </div>
+
+          <% if (feedbacks.length === 0) { %>
+            <div style="text-align: center; color: #999; padding: 60px 20px;">
+              <div style="font-size: 48px; margin-bottom: 12px;">📭</div>
+              <div>暂无反馈</div>
+            </div>
+          <% } else { %>
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+              <% feedbacks.forEach(function(fb) { %>
+                <div class="card" style="margin-bottom: 0; border-left: 4px solid <%= 
+                  fb.status === 'pending' ? '#f39c12' : 
+                  fb.status === 'processing' ? '#3498db' : '#27ae60'
+                %>;">
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                    <div>
+                      <strong style="font-size: 15px;"><%= fb.name %></strong>
+                      <span style="margin-left: 10px; padding: 2px 8px; border-radius: 4px; font-size: 12px; background: <%= 
+                        fb.type === 'suggestion' ? '#e3f2fd' : 
+                        fb.type === 'bug' ? '#ffebee' : 
+                        fb.type === 'question' ? '#fff3e0' : '#f5f5f5'
+                      %>; color: <%= 
+                        fb.type === 'suggestion' ? '#1976d2' : 
+                        fb.type === 'bug' ? '#c62828' : 
+                        fb.type === 'question' ? '#e65100' : '#616161'
+                      %>;">
+                        <%= 
+                          fb.type === 'suggestion' ? '💡 功能建议' : 
+                          fb.type === 'bug' ? '🐛 问题反馈' : 
+                          fb.type === 'question' ? '❓ 使用咨询' : '📝 其他'
+                        %>
+                      </span>
+                      <span style="margin-left: 10px; padding: 2px 8px; border-radius: 4px; font-size: 12px; background: <%= 
+                        fb.status === 'pending' ? '#fff3cd' : 
+                        fb.status === 'processing' ? '#d1ecf1' : '#d4edda'
+                      %>; color: <%= 
+                        fb.status === 'pending' ? '#856404' : 
+                        fb.status === 'processing' ? '#0c5460' : '#155724'
+                      %>;">
+                        <%= 
+                          fb.status === 'pending' ? '⏳ 待处理' : 
+                          fb.status === 'processing' ? '🔄 处理中' : '✅ 已解决'
+                        %>
+                      </span>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                      <button class="btn btn-default" style="font-size: 12px; padding: 4px 10px;" onclick="showReplyModal(<%= fb.id %>, '<%= fb.status %>', '<%= fb.reply ? fb.reply.replace(/'/g, \"\\\\'\") : '' %>')">
+                        回复
+                      </button>
+                      <button class="btn btn-default" style="font-size: 12px; padding: 4px 10px; color: #e74c3c;" onclick="deleteFeedback(<%= fb.id %>)">
+                        删除
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <% if (fb.email) { %>
+                    <div style="font-size: 12px; color: #999; margin-bottom: 8px;">
+                      📧 <%= fb.email %>
+                    </div>
+                  <% } %>
+                  
+                  <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; margin-bottom: 10px; white-space: pre-wrap; word-break: break-word;">
+                    <%= fb.content %>
+                  </div>
+                  
+                  <% if (fb.reply) { %>
+                    <div style="background: #e8f5e9; padding: 12px; border-radius: 6px; border-left: 3px solid #4caf50;">
+                      <div style="font-size: 12px; color: #2e7d32; margin-bottom: 4px; font-weight: 500;">📢 管理员回复：</div>
+                      <div style="white-space: pre-wrap; word-break: break-word; color: #2e7d32;"><%= fb.reply %></div>
+                    </div>
+                  <% } %>
+                  
+                  <div style="font-size: 12px; color: #bbb; margin-top: 10px;">
+                    提交时间: <%= new Date(fb.created_at).toLocaleString('zh-CN') %>
+                    <% if (fb.updated_at && fb.updated_at !== fb.created_at) { %>
+                      · 更新时间: <%= new Date(fb.updated_at).toLocaleString('zh-CN') %>
+                    <% } %>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 回复弹窗 -->
+  <div id="replyModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 12px; padding: 24px; width: 500px; max-width: 90%;">
+      <h3 style="margin-bottom: 20px;">回复反馈</h3>
+      <form id="replyForm">
+        <input type="hidden" id="replyId">
+        <div class="form-group">
+          <label class="form-label">处理状态</label>
+          <select id="replyStatus" class="form-input" style="height: 44px;">
+            <option value="pending">⏳ 待处理</option>
+            <option value="processing">🔄 处理中</option>
+            <option value="resolved">✅ 已解决</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">回复内容</label>
+          <textarea id="replyContent" class="form-textarea" rows="4" placeholder="请输入回复内容..."></textarea>
+        </div>
+        <div style="display: flex; gap: 12px; margin-top: 20px;">
+          <button type="button" class="btn btn-primary" style="flex: 1;" onclick="submitReply()">提交回复</button>
+          <button type="button" class="btn btn-default" onclick="hideReplyModal()">取消</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function showReplyModal(id, status, reply) {
+      document.getElementById('replyId').value = id;
+      document.getElementById('replyStatus').value = status;
+      document.getElementById('replyContent').value = reply || '';
+      document.getElementById('replyModal').style.display = 'flex';
+    }
+
+    function hideReplyModal() {
+      document.getElementById('replyModal').style.display = 'none';
+    }
+
+    function submitReply() {
+      const id = document.getElementById('replyId').value;
+      const status = document.getElementById('replyStatus').value;
+      const reply = document.getElementById('replyContent').value;
+
+      fetch('/admin/feedback/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status, reply })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          location.reload();
+        } else {
+          alert(data.error || '操作失败');
+        }
+      })
+      .catch(() => alert('操作失败，请重试'));
+    }
+
+    function deleteFeedback(id) {
+      if (!confirm('确定要删除这条反馈吗？')) return;
+
+      fetch('/admin/feedback/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          location.reload();
+        } else {
+          alert(data.error || '删除失败');
+        }
+      })
+      .catch(() => alert('删除失败，请重试'));
+    }
+
+    // 点击弹窗外部关闭
+    document.getElementById('replyModal').addEventListener('click', function(e) {
+      if (e.target === this) hideReplyModal();
+    });
+  </script>
+
+  <div class="footer">
+    <p>&copy; 2024 QQ登录网站 - 反馈管理</p>
+  </div>
+</body>
+</html>
