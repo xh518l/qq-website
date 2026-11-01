@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - QQ登录网站</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="navbar-brand">
+      <span class="logo">Q</span>
+      <span>QQ登录网站</span>
+    </a>
+    <ul class="navbar-menu">
+      <li><a href="/">首页</a></li>
+      <% sitePages.forEach(function(page) { %>
+        <li><a href="/page/<%= page.page_name %>"><%= page.title %></a></li>
+      <% }); %>
+      <li><a href="/chat">闲聊室</a></li>
+      <li><a href="/admin/edit">网站编辑</a></li>
+      <li><a href="/admin/users" style="opacity: 1;">用户管理</a></li>
+      <li><a href="/admin/banned-ips" style="opacity: 1;">IP封禁</a></li>
+    </ul>
+    <div class="navbar-user">
+      <div class="avatar">
+        <% if (currentUser && currentUser.avatar) { %>
+          <img src="<%= currentUser.avatar %>" alt="头像">
+        <% } %>
+      </div>
+      <span><%= currentUser ? currentUser.nickname : '用户' %></span>
+      <span class="admin-badge">管理员</span>
+      <a href="/logout" style="color: white; text-decoration: none; font-size: 14px;">退出</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 class="card-title" style="margin-bottom: 0;">IP封禁管理</h2>
+        <button class="btn btn-danger" onclick="showAddModal()">+ 添加封禁IP</button>
+      </div>
+
+      <% if (success) { %>
+        <div class="alert alert-success"><%= success %></div>
+      <% } %>
+
+      <% if (error) { %>
+        <div class="alert alert-error"><%= error %></div>
+      <% } %>
+
+      <% const activeBans = bannedIps.filter(b => b.is_active === 1); %>
+      <% const inactiveBans = bannedIps.filter(b => b.is_active === 0); %>
+
+      <% if (bannedIps.length === 0) { %>
+        <div style="text-align: center; padding: 40px; color: #999;">
+          暂无封禁记录
+        </div>
+      <% } else { %>
+        <% if (activeBans.length > 0) { %>
+          <h3 style="font-size: 16px; margin-bottom: 12px; color: #cf1322;">
+            🚫 当前封禁中 (<%= activeBans.length %>)
+          </h3>
+          <div style="overflow-x: auto; margin-bottom: 30px;">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>IP地址</th>
+                  <th>封禁原因</th>
+                  <th>操作人</th>
+                  <th>封禁时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% activeBans.forEach(function(ban) { %>
+                  <tr>
+                    <td><%= ban.id %></td>
+                    <td>
+                      <code style="background: #fff1f0; color: #cf1322; padding: 2px 8px; border-radius: 4px; font-family: 'Courier New', monospace;"><%= ban.ip %></code>
+                    </td>
+                    <td><%= ban.reason || '-' %></td>
+                    <td><%= ban.banned_by || '-' %></td>
+                    <td><%= ban.banned_at ? ban.banned_at.slice(0, 10) + ' ' + ban.banned_at.slice(11, 16) : '-' %></td>
+                    <td>
+                      <button class="btn btn-success" style="padding: 4px 12px; font-size: 12px;" onclick="unbanIp(<%= ban.id %>, '<%= ban.ip %>')">
+                        解除封禁
+                      </button>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+
+        <% if (inactiveBans.length > 0) { %>
+          <h3 style="font-size: 16px; margin-bottom: 12px; color: #666;">
+            📋 历史记录 (<%= inactiveBans.length %>)
+          </h3>
+          <div style="overflow-x: auto;">
+            <table class="table" style="opacity: 0.7;">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>IP地址</th>
+                  <th>封禁原因</th>
+                  <th>操作人</th>
+                  <th>封禁时间</th>
+                  <th>解封时间</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% inactiveBans.forEach(function(ban) { %>
+                  <tr>
+                    <td><%= ban.id %></td>
+                    <td>
+                      <code style="background: #f0f0f0; color: #666; padding: 2px 8px; border-radius: 4px; font-family: 'Courier New', monospace;"><%= ban.ip %></code>
+                    </td>
+                    <td><%= ban.reason || '-' %></td>
+                    <td><%= ban.banned_by || '-' %></td>
+                    <td><%= ban.banned_at ? ban.banned_at.slice(0, 10) : '-' %></td>
+                    <td><%= ban.unbanned_at ? ban.unbanned_at.slice(0, 10) : '-' %></td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      <% } %>
+    </div>
+
+    <div class="card">
+      <h3 class="card-title">说明</h3>
+      <ul style="margin: 10px 0 0 20px; font-size: 14px; color: #666; line-height: 2;">
+        <li>被封禁的IP地址无法访问网站任何页面</li>
+        <li>封禁用户时可以选择同时封禁其最后登录的IP</li>
+        <li>支持手动添加任意IP进行封禁</li>
+        <li>所有封禁和解封操作都有历史记录</li>
+        <li>解除封禁后该IP可以重新访问网站</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 添加IP封禁弹窗 -->
+  <div id="addModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 12px; padding: 30px; width: 440px; max-width: 90%;">
+      <h3 style="margin-bottom: 20px; color: #333;">添加IP封禁</h3>
+      
+      <div class="form-group">
+        <label class="form-label">IP地址 <span style="color: #ff4d4f;">*</span></label>
+        <input type="text" id="banIpInput" class="form-input" placeholder="例如: 192.168.1.100">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">封禁理由</label>
+        <textarea id="banReasonInput" class="form-textarea" style="min-height: 80px; resize: vertical;" placeholder="请输入封禁理由（选填）"></textarea>
+      </div>
+
+      <div style="display: flex; gap: 12px; margin-top: 20px;">
+        <button class="btn btn-danger" style="flex: 1;" onclick="confirmAdd()">确认封禁</button>
+        <button class="btn btn-default" onclick="hideAddModal()">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>&copy; 2024 QQ登录网站 - IP封禁管理</p>
+  </div>
+
+  <script>
+    function showAddModal() {
+      document.getElementById('banIpInput').value = '';
+      document.getElementById('banReasonInput').value = '';
+      document.getElementById('addModal').style.display = 'flex';
+    }
+
+    function hideAddModal() {
+      document.getElementById('addModal').style.display = 'none';
+    }
+
+    function confirmAdd() {
+      const ip = document.getElementById('banIpInput').value.trim();
+      const reason = document.getElementById('banReasonInput').value.trim();
+      
+      if (!ip) {
+        alert('请输入IP地址');
+        return;
+      }
+      
+      fetch('/admin/banned-ips/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ip: ip,
+          reason: reason
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert('IP已封禁');
+          location.reload();
+        } else {
+          alert(data.error || '封禁失败');
+        }
+      })
+      .catch(err => {
+        alert('操作失败，请重试');
+      });
+    }
+
+    function unbanIp(id, ip) {
+      if (!confirm(`确定要解除IP "${ip}" 的封禁吗？`)) {
+        return;
+      }
+      
+      fetch('/admin/banned-ips/remove', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          id: id
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert('已解除封禁');
+          location.reload();
+        } else {
+          alert(data.error || '操作失败');
+        }
+      })
+      .catch(err => {
+        alert('操作失败，请重试');
+      });
+    }
+
+    // 点击弹窗外部关闭
+    document.getElementById('addModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        hideAddModal();
+      }
+    });
+  </script>
+</body>
+</html>
