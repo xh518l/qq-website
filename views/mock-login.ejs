@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>模拟QQ登录 - QQ登录网站</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="login-wrapper">
+    <div class="login-card">
+      <div class="login-header">
+        <h1>模拟QQ登录</h1>
+        <p>选择测试账号快速体验</p>
+      </div>
+
+      <div class="alert alert-info">
+        当前为模拟登录模式，用于本地测试。<br>
+        如需启用真实QQ登录，请修改 <code>config.js</code> 配置。
+      </div>
+
+      <h3 style="font-size: 14px; color: #666; margin-bottom: 12px;">快速选择测试账号：</h3>
+      <div class="mock-users">
+        <% mockUsers.forEach(function(user) { %>
+          <div class="mock-user-item" onclick="selectMockUser('<%= user.qq_number %>')">
+            <img src="<%= user.avatar %>" alt="头像">
+            <div class="info">
+              <div class="name">
+                <%= user.nickname %>
+                <% if (user.qq_number === adminQQ) { %>
+                  <span class="badge">管理员</span>
+                <% } %>
+              </div>
+              <div class="qq">QQ: <%= user.qq_number %></div>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+
+      <div class="divider">
+        <span>或输入其他QQ号</span>
+      </div>
+
+      <form action="/auth/qq/mock" method="post">
+        <input type="hidden" name="state" value="<%= state %>">
+        <div class="form-group">
+          <label class="form-label">QQ号</label>
+          <input type="text" name="qq_number" id="qq_number" class="form-input" placeholder="请输入QQ号" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">模拟登录</button>
+      </form>
+
+      <div style="text-align: center; margin-top: 16px; font-size: 12px; color: #bbb;">
+        <a href="/login" style="color: #bbb; text-decoration: none;">返回登录页</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function selectMockUser(qqNumber) {
+      document.getElementById('qq_number').value = qqNumber;
+      document.querySelector('form').submit();
+    }
+  </script>
+</body>
+</html>
